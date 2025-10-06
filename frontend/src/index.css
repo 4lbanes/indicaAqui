@@ -1,0 +1,112 @@
+:root {
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+
+  --app-bg: linear-gradient(160deg, rgba(124, 58, 237, 0.22), rgba(233, 213, 255, 0.42)), #f6f3ff;
+  --text-primary: #311562;
+  --text-muted: #5b3f8c;
+  --accent-strong: #7c3aed;
+  --accent-hover: #9f67f9;
+  --accent-soft: rgba(124, 58, 237, 0.12);
+  --accent-soft-solid: #ede9fe;
+  --accent-gradient: linear-gradient(135deg, #6d28d9, #a855f7);
+  --accent-shadow: 0 12px 22px rgba(124, 58, 237, 0.25);
+  --card-bg: rgba(255, 255, 255, 0.92);
+  --card-shadow: 0 24px 50px rgba(76, 29, 149, 0.18);
+  --border-soft: #d8ceff;
+  --input-bg: #f9f5ff;
+  --input-border: #d8ceff;
+  --code-bg: #311562;
+  --code-text: #fdf4ff;
+  --score-bg: rgba(124, 58, 237, 0.1);
+  --danger-gradient: linear-gradient(135deg, #dc2626, #ef4444);
+  --danger-shadow: 0 12px 24px rgba(220, 38, 38, 0.25);
+  --slider-track-bg: rgba(124, 58, 237, 0.12);
+  --slider-track-border: rgba(124, 58, 237, 0.25);
+  --slider-thumb-bg: #ffffff;
+  --slider-thumb-shadow: 0 14px 30px rgba(124, 58, 237, 0.35);
+  --toggle-bg: rgba(255, 255, 255, 0.92);
+  --toggle-border: rgba(124, 58, 237, 0.2);
+  --toggle-icon: #7c3aed;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --app-bg: radial-gradient(120% 120% at 80% 0%, rgba(124, 58, 237, 0.35), transparent), #0f0b1c;
+  --text-primary: #ebe4ff;
+  --text-muted: #c7b5ff;
+  --accent-strong: #c084fc;
+  --accent-hover: #ddb8ff;
+  --accent-soft: rgba(192, 132, 252, 0.18);
+  --accent-soft-solid: rgba(79, 29, 135, 0.5);
+  --accent-gradient: linear-gradient(135deg, #7537c8, #a855f7);
+  --accent-shadow: 0 18px 32px rgba(168, 85, 247, 0.35);
+  --card-bg: rgba(23, 15, 41, 0.88);
+  --card-shadow: 0 30px 60px rgba(10, 6, 20, 0.65);
+  --border-soft: rgba(192, 132, 252, 0.38);
+  --input-bg: rgba(29, 20, 47, 0.92);
+  --input-border: rgba(192, 132, 252, 0.38);
+  --code-bg: #1b1030;
+  --code-text: #f6edff;
+  --score-bg: rgba(192, 132, 252, 0.18);
+  --danger-gradient: linear-gradient(135deg, #f87171, #dc2626);
+  --danger-shadow: 0 16px 30px rgba(248, 113, 113, 0.35);
+  --slider-track-bg: rgba(124, 58, 237, 0.2);
+  --slider-track-border: rgba(192, 132, 252, 0.32);
+  --slider-thumb-bg: rgba(16, 10, 28, 0.92);
+  --slider-thumb-shadow: 0 18px 34px rgba(0, 0, 0, 0.55);
+  --toggle-bg: rgba(21, 13, 33, 0.9);
+  --toggle-border: rgba(192, 132, 252, 0.32);
+  --toggle-icon: #f5ecff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+a {
+  color: var(--accent-strong);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--text-primary);
+  transition: background 0.6s ease, color 0.4s ease;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
