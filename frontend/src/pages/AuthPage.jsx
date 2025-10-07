@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { loginUser, registerUser, evaluatePassword } from '../api/client.js';
+import {
+  loginUser,
+  registerUser,
+  evaluatePassword,
+  requestPasswordReset,
+  confirmPasswordReset,
+} from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../hooks/useTranslation.js';
 
@@ -35,6 +41,11 @@ const AuthPage = () => {
   const [loginAlert, setLoginAlert] = useState('');
   const [loginSubmitting, setLoginSubmitting] = useState(false);
   const [loginShowPassword, setLoginShowPassword] = useState(false);
+  const [resetMode, setResetMode] = useState(false);
+  const [resetStage, setResetStage] = useState('email');
+  const [resetValues, setResetValues] = useState({ email: '', code: '', password: '', confirm: '' });
+  const [resetAlert, setResetAlert] = useState({ type: '', message: '' });
+  const [resetSubmitting, setResetSubmitting] = useState(false);
 
   const referralCode = useMemo(() => {
     const code = searchParams.get('ref');
@@ -182,8 +193,88 @@ const AuthPage = () => {
     setLoginAlert('');
   };
 
-  const handleForgotPassword = () => {
-    window.alert(t('auth.login.forgotMessage'));
+  const openReset = () => {
+    setResetMode(true);
+    setResetStage('email');
+    setResetValues((prev) => ({
+      email: loginValues.email || prev.email,
+      code: '',
+      password: '',
+      confirm: '',
+    }));
+    setResetAlert({ type: '', message: '' });
+  };
+
+  const closeReset = () => {
+    setResetMode(false);
+    setResetAlert({ type: '', message: '' });
+    setResetStage('email');
+    setResetValues({ email: '', code: '', password: '', confirm: '' });
+  };
+
+  const handleResetChange = (event) => {
+    const { name, value } = event.target;
+    setResetValues((prev) => ({ ...prev, [name]: value }));
+    setResetAlert({ type: '', message: '' });
+  };
+
+  const handleResetEmailSubmit = async (event) => {
+    event.preventDefault();
+    const emailValue = resetValues.email.trim().toLowerCase();
+    if (!emailRegex.test(emailValue)) {
+      setResetAlert({ type: 'error', message: t('auth.reset.invalidEmail') });
+      return;
+    }
+
+    setResetSubmitting(true);
+    try {
+      await requestPasswordReset({ email: emailValue });
+      setResetAlert({ type: 'success', message: t('auth.reset.emailSent') });
+      setResetStage('code');
+    } catch (err) {
+      setResetAlert({ type: 'error', message: err.message });
+    } finally {
+      setResetSubmitting(false);
+    }
+  };
+
+  const handleResetConfirmSubmit = async (event) => {
+    event.preventDefault();
+    const codeValue = resetValues.code.trim();
+    const newPassword = resetValues.password;
+    const confirmPassword = resetValues.confirm;
+    const emailValue = resetValues.email.trim().toLowerCase();
+
+    if (!emailRegex.test(emailValue)) {
+      setResetAlert({ type: 'error', message: t('auth.reset.invalidEmail') });
+      return;
+    }
+
+    if (!codeValue || codeValue.length !== 6) {
+      setResetAlert({ type: 'error', message: t('auth.reset.invalidCode') });
+      return;
+    }
+
+    if (!passwordRegex.test(newPassword)) {
+      setResetAlert({ type: 'error', message: t('auth.validation.passwordRegister') });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setResetAlert({ type: 'error', message: t('auth.reset.passwordMismatch') });
+      return;
+    }
+
+    setResetSubmitting(true);
+    try {
+      await confirmPasswordReset({ email: emailValue, code: codeValue, password: newPassword });
+      setResetAlert({ type: 'success', message: t('auth.reset.success') });
+      setResetStage('success');
+    } catch (err) {
+      setResetAlert({ type: 'error', message: err.message });
+    } finally {
+      setResetSubmitting(false);
+    }
   };
 
   const validateRegister = () => {
@@ -437,68 +528,161 @@ const AuthPage = () => {
             style={{ pointerEvents: loginSideActive ? 'auto' : 'none' }}
             aria-hidden={!loginSideActive}
           >
-            <form className="form" onSubmit={handleLoginSubmit} noValidate>
-              <label className="field">
-                <span>{t('auth.login.emailLabel')}</span>
-                <input
-                  name="email"
-                  type="email"
-                  placeholder={t('auth.login.emailPlaceholder')}
-                  value={loginValues.email}
-                  onChange={loginHandleChange}
-                  autoComplete="email"
-                  disabled={loginSubmitting}
-                />
-                {loginErrors.email ? <small>{loginErrors.email}</small> : null}
-              </label>
-              <label className="field">
-                <span>{t('auth.login.passwordLabel')}</span>
-                <div className="password-input">
-                  <input
-                    name="password"
-                    type={loginShowPassword ? 'text' : 'password'}
-                    placeholder={t('auth.login.passwordPlaceholder')}
-                    value={loginValues.password}
-                    onChange={loginHandleChange}
-                    autoComplete="current-password"
-                    disabled={loginSubmitting}
-                  />
+            {!resetMode ? (
+              <>
+                <form className="form" onSubmit={handleLoginSubmit} noValidate>
+                  <label className="field">
+                    <span>{t('auth.login.emailLabel')}</span>
+                    <input
+                      name="email"
+                      type="email"
+                      placeholder={t('auth.login.emailPlaceholder')}
+                      value={loginValues.email}
+                      onChange={loginHandleChange}
+                      autoComplete="email"
+                      disabled={loginSubmitting}
+                    />
+                    {loginErrors.email ? <small>{loginErrors.email}</small> : null}
+                  </label>
+                  <label className="field">
+                    <span>{t('auth.login.passwordLabel')}</span>
+                    <div className="password-input">
+                      <input
+                        name="password"
+                        type={loginShowPassword ? 'text' : 'password'}
+                        placeholder={t('auth.login.passwordPlaceholder')}
+                        value={loginValues.password}
+                        onChange={loginHandleChange}
+                        autoComplete="current-password"
+                        disabled={loginSubmitting}
+                      />
+                      <button
+                        type="button"
+                        className="toggle-password"
+                        onClick={() => setLoginShowPassword((prev) => !prev)}
+                        aria-label={loginShowPassword ? t('buttons.hide') : t('buttons.show')}
+                        disabled={loginSubmitting}
+                      >
+                        {loginShowPassword ? t('buttons.hide') : t('buttons.show')}
+                      </button>
+                    </div>
+                    {loginErrors.password ? <small>{loginErrors.password}</small> : null}
+                  </label>
                   <button
                     type="button"
-                    className="toggle-password"
-                    onClick={() => setLoginShowPassword((prev) => !prev)}
-                    aria-label={loginShowPassword ? t('buttons.hide') : t('buttons.show')}
+                    className="forgot-password"
+                    onClick={openReset}
+                  >
+                    {t('auth.login.forgot')}
+                  </button>
+                  <button type="submit" className="primary" disabled={loginSubmitting}>
+                    {loginSubmitting ? t('auth.login.submitting') : t('auth.login.submit')}
+                  </button>
+                  {loginAlert ? <p className="form-alert">{loginAlert}</p> : null}
+                </form>
+                <p className="hint">
+                  {t('auth.login.hint')}
+                  {' '}
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => handleModeChange('register')}
                     disabled={loginSubmitting}
                   >
-                    {loginShowPassword ? t('buttons.hide') : t('buttons.show')}
+                    {t('auth.login.hintAction')}
+                  </button>
+                </p>
+              </>
+            ) : (
+              <div className="reset-panel">
+                <div className="reset-panel-header">
+                  <h3>{resetStage === 'email' ? t('auth.reset.titleEmail') : resetStage === 'code' ? t('auth.reset.titleCode') : t('auth.reset.success')}</h3>
+                  <button type="button" className="ghost" onClick={closeReset} disabled={resetSubmitting}>
+                    {t('auth.reset.back')}
                   </button>
                 </div>
-                {loginErrors.password ? <small>{loginErrors.password}</small> : null}
-              </label>
-              <button
-                type="button"
-                className="forgot-password"
-                onClick={handleForgotPassword}
-              >
-                {t('auth.login.forgot')}
-              </button>
-              <button type="submit" className="primary" disabled={loginSubmitting}>
-                {loginSubmitting ? t('auth.login.submitting') : t('auth.login.submit')}
-              </button>
-              {loginAlert ? <p className="form-alert">{loginAlert}</p> : null}
-            </form>
-            <p className="hint">
-              {t('auth.login.hint')}
-              {' '}
-              <button
-                type="button"
-                className="link-button"
-                onClick={() => handleModeChange('register')}
-                disabled={loginSubmitting}
-              >
-                {t('auth.login.hintAction')}
-              </button>
-            </p>
+                {resetStage === 'email' ? (
+                  <form className="form" onSubmit={handleResetEmailSubmit}>
+                    <p className="hint">{t('auth.reset.descriptionEmail')}</p>
+                    <label className="field">
+                      <span>{t('auth.login.emailLabel')}</span>
+                      <input
+                        name="email"
+                        type="email"
+                        value={resetValues.email}
+                        onChange={handleResetChange}
+                        autoComplete="email"
+                        disabled={resetSubmitting}
+                      />
+                    </label>
+                    <button type="submit" className="primary" disabled={resetSubmitting}>
+                      {resetSubmitting ? t('auth.reset.sending') : t('auth.reset.send')}
+                    </button>
+                  </form>
+                ) : null}
+                {resetStage === 'code' ? (
+                  <form className="form" onSubmit={handleResetConfirmSubmit}>
+                    <label className="field">
+                      <span>{t('auth.login.emailLabel')}</span>
+                      <input
+                        name="email"
+                        type="email"
+                        value={resetValues.email}
+                        onChange={handleResetChange}
+                        autoComplete="email"
+                        disabled={resetSubmitting}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>{t('auth.reset.codeLabel')}</span>
+                      <input
+                        name="code"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder={t('auth.reset.codePlaceholder')}
+                        value={resetValues.code}
+                        onChange={handleResetChange}
+                        disabled={resetSubmitting}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>{t('auth.reset.newPasswordLabel')}</span>
+                      <input
+                        name="password"
+                        type="password"
+                        value={resetValues.password}
+                        onChange={handleResetChange}
+                        autoComplete="new-password"
+                        disabled={resetSubmitting}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>{t('auth.reset.confirmPasswordLabel')}</span>
+                      <input
+                        name="confirm"
+                        type="password"
+                        value={resetValues.confirm}
+                        onChange={handleResetChange}
+                        autoComplete="new-password"
+                        disabled={resetSubmitting}
+                      />
+                    </label>
+                    <button type="submit" className="primary" disabled={resetSubmitting}>
+                      {resetSubmitting ? t('auth.reset.updating') : t('auth.reset.update')}
+                    </button>
+                  </form>
+                ) : null}
+                {resetStage === 'success' ? (
+                  <div className="reset-success">
+                    <p className="hint">{t('auth.reset.success')}</p>
+                  </div>
+                ) : null}
+                {resetAlert.message ? (
+                  <p className={`reset-alert ${resetAlert.type}`}>{resetAlert.message}</p>
+                ) : null}
+              </div>
+            )}
           </div>
         </div>
       </div>

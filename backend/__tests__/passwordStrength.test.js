@@ -1,8 +1,18 @@
 const request = require('supertest');
 const bcrypt = require('bcryptjs');
 
+jest.mock('../src/mailer.js', () => ({
+  sendPasswordResetEmail: jest.fn().mockResolvedValue(),
+}));
+
 const app = require('../src/index.js');
 const { run, db } = require('../src/db.js');
+const { sendPasswordResetEmail } = require('../src/mailer.js');
+
+beforeEach(async () => {
+  await run('DELETE FROM password_resets');
+  await run('DELETE FROM users');
+});
 
 describe('POST /api/password-strength', () => {
   test('returns weak classification for simple password', async () => {
@@ -47,7 +57,60 @@ describe('POST /api/password-strength', () => {
     expect(response.body.reused).toBe(true);
   });
 
-  afterAll(() => {
-    db.close();
+});
+
+describe('POST /api/password-reset', () => {
+  const email = 'reset@example.com';
+  const originalPassword = 'Original123!';
+
+  beforeEach(async () => {
+    const hash = await bcrypt.hash(originalPassword, 10);
+    const referralCode = Date.now().toString(36).slice(-6).toUpperCase();
+    await run(
+      'INSERT INTO users (name, email, password_hash, referral_code) VALUES (?, ?, ?, ?)',
+      ['Reset User', email, hash, referralCode],
+    );
   });
+
+  test('sends reset email for known user', async () => {
+    sendPasswordResetEmail.mockClear();
+
+    await request(app)
+      .post('/api/password-reset/request')
+      .send({ email })
+      .expect(200);
+
+    expect(sendPasswordResetEmail).toHaveBeenCalledWith(
+      email,
+      expect.any(String),
+    );
+  });
+
+  test('completes password reset flow', async () => {
+    sendPasswordResetEmail.mockClear();
+
+    await request(app)
+      .post('/api/password-reset/request')
+      .send({ email })
+      .expect(200);
+
+    const latestCall = sendPasswordResetEmail.mock.calls.at(-1);
+    const code = latestCall ? latestCall[1] : null;
+    expect(code).toBeTruthy();
+
+    const newPassword = 'NovaSenha123!';
+    await request(app)
+      .post('/api/password-reset/confirm')
+      .send({ email, code, password: newPassword })
+      .expect(200);
+
+    await request(app)
+      .post('/api/login')
+      .send({ email, password: newPassword })
+      .expect(200);
+  });
+});
+
+afterAll(() => {
+  db.close();
 });

@@ -29,6 +29,15 @@ db.serialize(() => {
       FOREIGN KEY(referred_by) REFERENCES users(id)
     )
   `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS password_resets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL,
+      code_hash TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 });
 
 const run = (sql, params = []) => (

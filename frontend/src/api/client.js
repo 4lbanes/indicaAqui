@@ -57,10 +57,26 @@ export const evaluatePassword = (payload) => (
   })
 );
 
+export const requestPasswordReset = (payload) => (
+  request('/api/password-reset/request', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+);
+
+export const confirmPasswordReset = (payload) => (
+  request('/api/password-reset/confirm', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+);
+
 export default {
   registerUser,
   loginUser,
   fetchProfile,
   deleteAccount,
   evaluatePassword,
+  requestPasswordReset,
+  confirmPasswordReset,
 };

@@ -11,6 +11,7 @@ Plataforma single-page para cadastro de usuários com indicação e pontuação.
 - Tema claro/escuro com preferência salva em `localStorage`.
 - UI bilíngue (Português/Inglês) com troca instantânea.
 - Avaliação de senha em tempo real (score visual, recomendações e senha sugerida).
+- Recuperação de senha via e-mail com código de verificação e redefinição segura.
 
 ## 🧱 Arquitetura em alto nível
 ```
@@ -93,6 +94,8 @@ Ele garante a cópia dos `.env`, instala dependências caso necessário e execut
 | GET    | `/api/me`               | Dados do usuário autenticado.                                            | Bearer token |
 | DELETE | `/api/me`               | Remove a conta autenticada (requer confirmação de `email` e `password`). | Bearer token |
 | POST   | `/api/password-strength`| Avalia senha e retorna métricas (score, nível, recomendações).           | —            |
+| POST   | `/api/password-reset/request` | Solicita código de recuperação (resposta genérica para evitar enumeração). | —            |
+| POST   | `/api/password-reset/confirm` | Valida código, define nova senha e invalida códigos antigos.             | —            |
 
 Exemplo de chamada `password-strength`:
 ```bash
@@ -131,6 +134,7 @@ backend/
   src/index.js           # Rotas, validações e regras (inclui geração de senha sugerida)
   src/db.js              # Conexão SQLite, helpers (run/get/all), bootstrapping
   src/auth.js            # Middleware JWT
+  src/mailer.js          # Envio de e-mails (reset de senha) com fallback para console
   __tests__/passwordStrength.test.js  # Casos de teste com Jest + Supertest
 frontend/
   src/pages/AuthPage.jsx # Formulário com slider 3D + analisador de senha
@@ -150,10 +154,9 @@ Utilizei o assistente Codex para:
 Lições tiradas: reforço das boas práticas de modularização da API, importância de alinhar validações front/back e ganho de produtividade ao acoplar IA no fluxo (refinando mensagens de commit, documentação e testes).
 
 ## 🚧 Próximos passos sugeridos
-- Integrar serviço de e-mail para disparar boas-vindas e notificação de novos pontos.
+- Integrar serviço de e-mail (SMTP/SendGrid etc.) para enviar códigos de reset, boas-vindas e alertas de pontos.
 - Criar histórico detalhado de indicações (quem convidou quem, datas, status).
 - Disponibilizar painel administrativo com ranking, filtros e exportação.
 - Adicionar rate limiting em tentativas suspeitas de login/cadastro.
 - Adicionar CAPTCHA na criação das contas.
 - Implementar testes E2E (Cypress ou Playwright) cobrindo o fluxo completo de cadastro, login e exclusão.
-

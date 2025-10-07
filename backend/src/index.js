@@ -7,6 +7,7 @@ const { randomBytes } = require('crypto');
 
 const { run, get, all } = require('./db');
 const { authenticate, JWT_SECRET } = require('./auth');
+const { sendPasswordResetEmail } = require('./mailer');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -126,6 +127,91 @@ app.post('/api/password-strength', async (req, res) => {
   } catch (err) {
     console.error('Erro ao avaliar senha:', err);
     return res.status(500).json({ message: 'Erro ao avaliar senha.' });
+  }
+});
+
+app.post('/api/password-reset/request', async (req, res) => {
+  const { email = '' } = req.body || {};
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail || !emailRegex.test(normalizedEmail)) {
+    return res.status(200).json({ message: 'Se o e-mail existir, enviaremos um código.' });
+  }
+
+  try {
+    const user = await get('SELECT id FROM users WHERE email = ?', [normalizedEmail]);
+    if (!user) {
+      return res.status(200).json({ message: 'Se o e-mail existir, enviaremos um código.' });
+    }
+
+    const code = (`000000${Math.floor(Math.random() * 1_000_000)}`).slice(-6);
+    const codeHash = await bcrypt.hash(code, 10);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    await run('DELETE FROM password_resets WHERE email = ?', [normalizedEmail]);
+    await run(
+      'INSERT INTO password_resets (email, code_hash, expires_at) VALUES (?, ?, ?)',
+      [normalizedEmail, codeHash, expiresAt],
+    );
+
+    await sendPasswordResetEmail(normalizedEmail, code);
+
+    return res.json({ message: 'Se o e-mail existir, enviaremos um código.' });
+  } catch (err) {
+    console.error('Erro ao solicitar redefinição de senha:', err);
+    return res.status(500).json({ message: 'Erro ao processar a solicitação.' });
+  }
+});
+
+app.post('/api/password-reset/confirm', async (req, res) => {
+  const { email = '', code = '', password = '' } = req.body || {};
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail || !emailRegex.test(normalizedEmail)) {
+    return res.status(400).json({ message: 'Informe um e-mail válido.' });
+  }
+
+  if (!code || code.length !== 6) {
+    return res.status(400).json({ message: 'Código inválido.' });
+  }
+
+  if (!passwordRegex.test(password)) {
+    return res.status(400).json({ message: 'A senha deve ter no mínimo 8 caracteres, incluindo letras e números.' });
+  }
+
+  try {
+    const reset = await get(
+      'SELECT * FROM password_resets WHERE email = ? ORDER BY created_at DESC LIMIT 1',
+      [normalizedEmail],
+    );
+
+    if (!reset) {
+      return res.status(400).json({ message: 'Código inválido ou expirado.' });
+    }
+
+    if (new Date(reset.expires_at).getTime() < Date.now()) {
+      await run('DELETE FROM password_resets WHERE email = ?', [normalizedEmail]);
+      return res.status(400).json({ message: 'Código inválido ou expirado.' });
+    }
+
+    const codeMatches = await bcrypt.compare(code, reset.code_hash);
+    if (!codeMatches) {
+      return res.status(400).json({ message: 'Código inválido ou expirado.' });
+    }
+
+    const user = await get('SELECT id FROM users WHERE email = ?', [normalizedEmail]);
+    if (!user) {
+      return res.status(400).json({ message: 'Usuário não encontrado.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await run('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, user.id]);
+    await run('DELETE FROM password_resets WHERE email = ?', [normalizedEmail]);
+
+    return res.json({ message: 'Senha atualizada com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao confirmar redefinição de senha:', err);
+    return res.status(500).json({ message: 'Erro ao redefinir senha.' });
   }
 });
 
