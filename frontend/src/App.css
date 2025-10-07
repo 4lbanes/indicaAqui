@@ -186,15 +186,17 @@
   width: 64px;
   height: 64px;
   border-radius: 32px;
-  border: none;
-  background: var(--slider-thumb-bg);
-  box-shadow: var(--slider-thumb-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.22);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.6rem;
+  color: var(--accent-strong);
   transform: translateX(var(--knob-offset, 0px)) translateY(-50%);
-  transition: transform 0.25s ease;
+  transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
   cursor: grab;
 }
 
@@ -326,6 +328,8 @@
   background: var(--accent-soft);
   border-radius: 16px;
   padding: 16px 18px;
+  max-height: 240px;
+  overflow: hidden;
 }
 
 .password-strength-loading {
@@ -393,6 +397,8 @@
   flex-direction: column;
   gap: 6px;
   color: var(--text-muted);
+  max-height: 140px;
+  overflow-y: auto;
 }
 
 .password-suggestions-title {
@@ -423,6 +429,7 @@
   .password-strength {
     padding: 14px;
     gap: 10px;
+    max-height: 220px;
   }
 
   .password-suggestions ul {
@@ -434,6 +441,22 @@
     width: 100%;
     text-align: center;
   }
+}
+
+.forgot-password {
+  border: none;
+  background: none;
+  color: var(--accent-strong);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+  align-self: flex-end;
+  transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
 }
 
 .primary {

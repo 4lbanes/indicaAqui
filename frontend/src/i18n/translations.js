@@ -43,6 +43,8 @@ export const translations = {
         submitting: 'Entrando…',
         hint: 'Novo por aqui?',
         hintAction: 'Cadastre-se',
+        forgot: 'Esqueci minha senha',
+        forgotMessage: 'Recupere sua senha entrando em contato com o suporte ou use a opção "Usar senha sugerida" para definir uma nova.',
       },
       validation: {
         name: 'Informe seu nome completo.',
@@ -137,6 +139,8 @@ export const translations = {
         submitting: 'Signing in…',
         hint: 'New here?',
         hintAction: 'Create an account',
+        forgot: 'Forgot password?',
+        forgotMessage: 'Reset your password via support or choose "Use suggested password" to set a new one.',
       },
       validation: {
         name: 'Please tell us your full name.',

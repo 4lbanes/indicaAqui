@@ -182,6 +182,10 @@ const AuthPage = () => {
     setLoginAlert('');
   };
 
+  const handleForgotPassword = () => {
+    window.alert(t('auth.login.forgotMessage'));
+  };
+
   const validateRegister = () => {
     const errors = {};
     if (!registerValues.name.trim()) {
@@ -471,6 +475,13 @@ const AuthPage = () => {
                 </div>
                 {loginErrors.password ? <small>{loginErrors.password}</small> : null}
               </label>
+              <button
+                type="button"
+                className="forgot-password"
+                onClick={handleForgotPassword}
+              >
+                {t('auth.login.forgot')}
+              </button>
               <button type="submit" className="primary" disabled={loginSubmitting}>
                 {loginSubmitting ? t('auth.login.submitting') : t('auth.login.submit')}
               </button>
