@@ -42,3 +42,7 @@ logs/
 *.seed
 *.tgz
 
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/

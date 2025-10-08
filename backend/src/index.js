@@ -156,7 +156,12 @@ app.post('/api/password-reset/request', async (req, res) => {
 
     await sendPasswordResetEmail(normalizedEmail, code);
 
-    return res.json({ message: 'Se o e-mail existir, enviaremos um código.' });
+    const payload = { message: 'Se o e-mail existir, enviaremos um código.' };
+    if (process.env.NODE_ENV === 'test') {
+      payload.code = code;
+    }
+
+    return res.json(payload);
   } catch (err) {
     console.error('Erro ao solicitar redefinição de senha:', err);
     return res.status(500).json({ message: 'Erro ao processar a solicitação.' });

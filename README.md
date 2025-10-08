@@ -91,7 +91,7 @@ Ele garante a cópia dos `.env`, instala dependências caso necessário e execut
 | ------ | ----------------------- | ------------------------------------------------------------------------- | ------------ |
 | POST   | `/api/register`         | Cria usuário (`name`, `email`, `password`, `referralCode?`).             | —            |
 | POST   | `/api/login`            | Retorna token + dados do usuário existente.                              | —            |
-| GET    | `/api/me`               | Dados do usuário autenticado.                                            | Bearer token |
+| GET    | `/api/me`               | Dados do usuário autenticado (inclui histórico de indicações).          | Bearer token |
 | DELETE | `/api/me`               | Remove a conta autenticada (requer confirmação de `email` e `password`). | Bearer token |
 | POST   | `/api/password-strength`| Avalia senha e retorna métricas (score, nível, recomendações).           | —            |
 | POST   | `/api/password-reset/request` | Solicita código de recuperação (resposta genérica para evitar enumeração). | —            |
@@ -121,6 +121,10 @@ Resposta (resumo):
 ```
 O front consome esse endpoint para exibir a barra colorida (vermelho, laranja, verde) e as recomendações.
 
+## 🧪 Testes
+- `backend/npm test` — executa a suíte Jest + Supertest em banco SQLite em memória.
+- `npm install` (na raiz) + `npx playwright install` + `npm run test:e2e` — sobe API e SPA automaticamente em modo teste e roda o fluxo completo com Playwright (cadastro → login → indicação → reset → exclusão).
+
 ## 💡 Decisões de design
 - **Componentização mínima**: a SPA foca em duas páginas (`AuthPage` e `ProfilePage`) com contextos para estado global (auth/tema/idioma), evitando lib de estado pesada.
 - **Internacionalização sem dependências**: um simples objeto `translations` + contexto garante alternância instantânea de idioma, e mantém as strings centralizadas.
@@ -134,7 +138,7 @@ backend/
   src/index.js           # Rotas, validações e regras (inclui geração de senha sugerida)
   src/db.js              # Conexão SQLite, helpers (run/get/all), bootstrapping
   src/auth.js            # Middleware JWT
-  src/mailer.js          # Envio de e-mails (reset de senha) com fallback para console
+  src/mailer.js          # Simulação de envio de código de reset (log em console)
   __tests__/passwordStrength.test.js  # Casos de teste com Jest + Supertest
 frontend/
   src/pages/AuthPage.jsx # Formulário com slider 3D + analisador de senha
@@ -143,6 +147,9 @@ frontend/
   src/api/client.js      # Cliente REST (register/login/profile/password-strength)
   src/i18n/translations.js # Dicionário pt/en
   src/App.css            # Estilização global (tema, slider, password meter)
+e2e/
+  app.spec.js           # Teste end-to-end com Playwright
+playwright.config.js    # Configuração do Playwright (sobe API + SPA em modo teste)
 ```
 
 ## 🤖 Colaboração com IA
@@ -154,9 +161,15 @@ Utilizei o assistente Codex para:
 Lições tiradas: reforço das boas práticas de modularização da API, importância de alinhar validações front/back e ganho de produtividade ao acoplar IA no fluxo (refinando mensagens de commit, documentação e testes).
 
 ## 🚧 Próximos passos sugeridos
-- Integrar serviço de e-mail (SMTP/SendGrid etc.) para enviar códigos de reset, boas-vindas e alertas de pontos.
-- Criar histórico detalhado de indicações (quem convidou quem, datas, status).
-- Disponibilizar painel administrativo com ranking, filtros e exportação.
+- Integrar serviço de e-mail real (SMTP/SendGrid etc.) para enviar códigos de reset, boas-vindas e alertas de pontos.
+- Criar visualizações administrativas (ranking, filtros e exportação) com base no histórico já disponível.
 - Adicionar rate limiting em tentativas suspeitas de login/cadastro.
 - Adicionar CAPTCHA na criação das contas.
-- Implementar testes E2E (Cypress ou Playwright) cobrindo o fluxo completo de cadastro, login e exclusão.
+- Disponibilizar testes E2E em pipeline CI/CD (GitHub Actions) e publicar deploy containerizado.
+
+## 📚 Casos de uso cobertos
+- **Cadastro e login** com validação instantânea de campos e persistência via JWT.
+- **Sistema de indicações** gerando link único, pontuação automática e histórico por usuário.
+- **Recuperação de senha** com solicitação de código, validação e troca segura totalmente automatizada.
+- **Experiência de senha** com avaliação de força, sugestões personalizadas e verificação de reutilização.
+- **Exclusão de conta** com confirmação de credenciais e limpeza dos dados na base.

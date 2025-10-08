@@ -75,7 +75,7 @@ describe('POST /api/password-reset', () => {
   test('sends reset email for known user', async () => {
     sendPasswordResetEmail.mockClear();
 
-    await request(app)
+    const response = await request(app)
       .post('/api/password-reset/request')
       .send({ email })
       .expect(200);
@@ -84,18 +84,18 @@ describe('POST /api/password-reset', () => {
       email,
       expect.any(String),
     );
+    expect(response.body.code).toHaveLength(6);
   });
 
   test('completes password reset flow', async () => {
     sendPasswordResetEmail.mockClear();
 
-    await request(app)
+    const requestResponse = await request(app)
       .post('/api/password-reset/request')
       .send({ email })
       .expect(200);
 
-    const latestCall = sendPasswordResetEmail.mock.calls.at(-1);
-    const code = latestCall ? latestCall[1] : null;
+    const code = requestResponse.body.code;
     expect(code).toBeTruthy();
 
     const newPassword = 'NovaSenha123!';
