@@ -647,6 +647,49 @@
   font-size: 0.82rem;
 }
 
+.referral-history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--accent-soft);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.referral-history h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--accent-strong);
+}
+
+.referral-history table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.referral-history th,
+.referral-history td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.referral-history th {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.referral-history tr:last-child td {
+  border-bottom: none;
+}
+
+.empty-referrals {
+  margin: 0;
+}
+
 .danger-zone {
   margin-top: 12px;
   padding-top: 20px;

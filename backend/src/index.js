@@ -331,6 +331,11 @@ app.get('/api/me', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Usuário não encontrado.' });
     }
 
+    const referrals = await all(
+      'SELECT name, email, created_at FROM users WHERE referred_by = ? ORDER BY created_at DESC',
+      [user.id],
+    );
+
     return res.json({
       id: user.id,
       name: user.name,
@@ -338,6 +343,7 @@ app.get('/api/me', authenticate, async (req, res) => {
       points: user.points,
       referralCode: user.referral_code,
       referralLink: buildReferralLink(user.referral_code),
+      referrals,
     });
   } catch (err) {
     console.error('Erro ao buscar perfil:', err);

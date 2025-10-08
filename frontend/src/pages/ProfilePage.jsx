@@ -15,6 +15,7 @@ const ProfilePage = () => {
   const [deleteAlert, setDeleteAlert] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const normalizedUserEmail = useMemo(() => user?.email?.trim().toLowerCase() ?? '', [user]);
+  const referrals = user?.referrals ?? [];
 
   useEffect(() => {
     if (!loading && !user) {
@@ -142,6 +143,31 @@ const ProfilePage = () => {
       <p className="hint">
         {t('profile.shareHint')}
       </p>
+      <div className="referral-history">
+        <h3>{t('profile.referralsTitle')}</h3>
+        {referrals.length === 0 ? (
+          <p className="hint empty-referrals">{t('profile.referralsEmpty')}</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>{t('profile.referralsDate')}</th>
+                <th>{t('profile.referralsEmail')}</th>
+                <th>{t('auth.register.nameLabel')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {referrals.map((referral) => (
+                <tr key={`${referral.email}-${referral.created_at}`}>
+                  <td>{new Date(referral.created_at).toLocaleDateString()}</td>
+                  <td>{referral.email}</td>
+                  <td>{referral.name}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
       <div className="danger-zone">
         <h3>{t('profile.dangerTitle')}</h3>
         <p className="hint">{t('profile.dangerDescription')}</p>
