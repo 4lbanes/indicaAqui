@@ -10,8 +10,22 @@ import {
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTranslation } from '../hooks/useTranslation.js';
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
+const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ'\s]{1,80}$/;
+const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,128}$/;
+const sanitizeNameInput = (value) => value
+  .normalize('NFC')
+  .replace(/[^A-Za-zÀ-ÖØ-öø-ÿ'\s]/g, '')
+  .slice(0, 80);
+
+const sanitizePasswordInput = (value) => value
+  .replace(/[^A-Za-z0-9@$!%*?&]/g, '')
+  .slice(0, 128);
+
+const sanitizeEmailInput = (value) => value
+  .normalize('NFC')
+  .replace(/[^A-Za-z0-9.@_%+-]/g, '')
+  .slice(0, 120);
 const SLIDER_KNOB_SIZE = 64;
 
 const AuthPage = () => {
@@ -181,14 +195,37 @@ const AuthPage = () => {
 
   const registerHandleChange = (event) => {
     const { name, value } = event.target;
-    setRegisterValues((prev) => ({ ...prev, [name]: value }));
+    let nextValue = value;
+    if (name === 'name') {
+      nextValue = sanitizeNameInput(nextValue);
+    }
+    if (name === 'password') {
+      nextValue = sanitizePasswordInput(nextValue);
+    }
+    if (name === 'email') {
+      nextValue = sanitizeEmailInput(nextValue);
+    }
+    if (nextValue !== value && event.target) {
+      event.target.value = nextValue;
+    }
+    setRegisterValues((prev) => ({ ...prev, [name]: nextValue }));
     setRegisterErrors((prev) => ({ ...prev, [name]: '' }));
     setRegisterAlert('');
   };
 
   const loginHandleChange = (event) => {
     const { name, value } = event.target;
-    setLoginValues((prev) => ({ ...prev, [name]: value }));
+    let nextValue = value;
+    if (name === 'password') {
+      nextValue = sanitizePasswordInput(nextValue);
+    }
+    if (name === 'email') {
+      nextValue = sanitizeEmailInput(nextValue);
+    }
+    if (nextValue !== value && event.target) {
+      event.target.value = nextValue;
+    }
+    setLoginValues((prev) => ({ ...prev, [name]: nextValue }));
     setLoginErrors((prev) => ({ ...prev, [name]: '' }));
     setLoginAlert('');
   };
@@ -214,7 +251,17 @@ const AuthPage = () => {
 
   const handleResetChange = (event) => {
     const { name, value } = event.target;
-    setResetValues((prev) => ({ ...prev, [name]: value }));
+    let nextValue = value;
+    if (name === 'email') {
+      nextValue = sanitizeEmailInput(nextValue);
+    }
+    if (name === 'password' || name === 'confirm') {
+      nextValue = sanitizePasswordInput(nextValue);
+    }
+    if (nextValue !== value) {
+      event.target.value = nextValue;
+    }
+    setResetValues((prev) => ({ ...prev, [name]: nextValue }));
     setResetAlert({ type: '', message: '' });
   };
 
@@ -279,7 +326,11 @@ const AuthPage = () => {
 
   const validateRegister = () => {
     const errors = {};
-    if (!registerValues.name.trim()) {
+    const trimmedName = sanitizeNameInput(registerValues.name.trim());
+    if (trimmedName !== registerValues.name.trim()) {
+      setRegisterValues((prev) => ({ ...prev, name: trimmedName }));
+    }
+    if (!trimmedName || !nameRegex.test(trimmedName)) {
       errors.name = t('auth.validation.name');
     }
     if (!emailRegex.test(registerValues.email.trim().toLowerCase())) {
@@ -297,7 +348,7 @@ const AuthPage = () => {
     if (!emailRegex.test(loginValues.email.trim().toLowerCase())) {
       errors.email = t('auth.validation.email');
     }
-    if (!loginValues.password) {
+    if (!loginValues.password || loginValues.password.length > 128) {
       errors.password = t('auth.validation.passwordLogin');
     }
     setLoginErrors(errors);
@@ -427,6 +478,7 @@ const AuthPage = () => {
                   onChange={registerHandleChange}
                   autoComplete="name"
                   disabled={registerSubmitting}
+                  maxLength={80}
                 />
                 {registerErrors.name ? <small>{registerErrors.name}</small> : null}
               </label>
@@ -440,6 +492,7 @@ const AuthPage = () => {
                   onChange={registerHandleChange}
                   autoComplete="email"
                   disabled={registerSubmitting}
+                  maxLength={120}
                 />
                 {registerErrors.email ? <small>{registerErrors.email}</small> : null}
               </label>
@@ -454,6 +507,7 @@ const AuthPage = () => {
                     onChange={registerHandleChange}
                     autoComplete="new-password"
                     disabled={registerSubmitting}
+                    maxLength={128}
                   />
                   <button
                     type="button"
@@ -533,29 +587,31 @@ const AuthPage = () => {
                 <form className="form" onSubmit={handleLoginSubmit} noValidate>
                   <label className="field">
                     <span>{t('auth.login.emailLabel')}</span>
-                    <input
-                      name="email"
-                      type="email"
-                      placeholder={t('auth.login.emailPlaceholder')}
-                      value={loginValues.email}
-                      onChange={loginHandleChange}
-                      autoComplete="email"
-                      disabled={loginSubmitting}
-                    />
+                <input
+                  name="email"
+                  type="email"
+                  placeholder={t('auth.login.emailPlaceholder')}
+                  value={loginValues.email}
+                  onChange={loginHandleChange}
+                  autoComplete="email"
+                  disabled={loginSubmitting}
+                  maxLength={120}
+                />
                     {loginErrors.email ? <small>{loginErrors.email}</small> : null}
                   </label>
                   <label className="field">
                     <span>{t('auth.login.passwordLabel')}</span>
                     <div className="password-input">
-                      <input
-                        name="password"
-                        type={loginShowPassword ? 'text' : 'password'}
-                        placeholder={t('auth.login.passwordPlaceholder')}
-                        value={loginValues.password}
-                        onChange={loginHandleChange}
-                        autoComplete="current-password"
-                        disabled={loginSubmitting}
-                      />
+                  <input
+                    name="password"
+                    type={loginShowPassword ? 'text' : 'password'}
+                    placeholder={t('auth.login.passwordPlaceholder')}
+                    value={loginValues.password}
+                    onChange={loginHandleChange}
+                    autoComplete="current-password"
+                    disabled={loginSubmitting}
+                    maxLength={128}
+                  />
                       <button
                         type="button"
                         className="toggle-password"
@@ -613,6 +669,7 @@ const AuthPage = () => {
                         onChange={handleResetChange}
                         autoComplete="email"
                         disabled={resetSubmitting}
+                        maxLength={120}
                       />
                     </label>
                     <button type="submit" className="primary" disabled={resetSubmitting}>
@@ -631,6 +688,7 @@ const AuthPage = () => {
                         onChange={handleResetChange}
                         autoComplete="email"
                         disabled={resetSubmitting}
+                        maxLength={120}
                       />
                     </label>
                     <label className="field">
@@ -655,6 +713,7 @@ const AuthPage = () => {
                         onChange={handleResetChange}
                         autoComplete="new-password"
                         disabled={resetSubmitting}
+                        maxLength={128}
                       />
                     </label>
                     <label className="field">
@@ -666,6 +725,7 @@ const AuthPage = () => {
                         onChange={handleResetChange}
                         autoComplete="new-password"
                         disabled={resetSubmitting}
+                        maxLength={128}
                       />
                     </label>
                     <button type="submit" className="primary" disabled={resetSubmitting}>

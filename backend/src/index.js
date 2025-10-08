@@ -18,7 +18,7 @@ const clientOrigins = (process.env.CLIENT_BASE_URL || 'http://localhost:5173')
 app.use(cors({ origin: clientOrigins, credentials: false }));
 app.use(express.json());
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
 
 
@@ -230,7 +230,7 @@ app.post('/api/register', async (req, res) => {
   const trimmedName = name.trim();
   const normalizedEmail = email.trim().toLowerCase();
 
-  if (!trimmedName) {
+  if (!trimmedName || trimmedName.length > 80 || /[^A-Za-zÀ-ÖØ-öø-ÿ'\s]/.test(trimmedName)) {
     return res.status(400).json({ message: 'Informe um nome válido.' });
   }
 
@@ -238,7 +238,7 @@ app.post('/api/register', async (req, res) => {
     return res.status(400).json({ message: 'Informe um e-mail válido.' });
   }
 
-  if (!passwordRegex.test(password)) {
+  if (!passwordRegex.test(password) || password.length > 128) {
     return res.status(400).json({ message: 'A senha deve ter no mínimo 8 caracteres, incluindo letras e números.' });
   }
 

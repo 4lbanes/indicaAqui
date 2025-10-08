@@ -121,8 +121,9 @@
   width: min(340px, 100%);
   height: 56px;
   border-radius: 999px;
-  border: 1px solid var(--slider-track-border);
-  background: var(--slider-track-bg);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   padding: 0 20px;
@@ -140,7 +141,7 @@
   position: absolute;
   inset: 0;
   background: var(--accent-gradient);
-  opacity: 0.55;
+  opacity: 0.4;
   transform-origin: left;
   transform: scaleX(calc(0.32 + var(--slider-progress, 0) * 0.68));
   transition: transform 0.25s ease, opacity 0.3s ease;
@@ -186,8 +187,8 @@
   width: 64px;
   height: 64px;
   border-radius: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.42);
   backdrop-filter: blur(6px);
   box-shadow: 0 10px 25px rgba(124, 58, 237, 0.22);
   display: flex;
