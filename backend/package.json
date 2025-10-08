@@ -5,8 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "cross-env NODE_ENV=test jest --runInBand"
+    "dev": "nodemon src/index.js"
   },
   "keywords": [],
   "author": "",
@@ -20,9 +19,6 @@
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
-    "jest": "^29.7.0",
-    "nodemon": "^3.1.10",
-    "supertest": "^6.3.4"
+    "nodemon": "^3.1.10"
   }
 }
