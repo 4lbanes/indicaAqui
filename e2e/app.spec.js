@@ -22,12 +22,13 @@ test.describe('Fluxo completo de indicação', () => {
 
     // Cadastro do primeiro usuário
     await page.goto('/');
-    await page.locator('input[name="name"]').fill(firstUser.name);
-    await page.locator('input[name="email"]').fill(primaryEmail);
-    await page.locator('input[name="password"]').fill(firstUser.password);
+    const registerForm = page.locator('.flip-card-front form');
+    await registerForm.locator('input[name="name"]').fill(firstUser.name);
+    await registerForm.locator('input[name="email"]').fill(primaryEmail);
+    await registerForm.locator('input[name="password"]').fill(firstUser.password);
     await Promise.all([
       page.waitForURL('**/profile'),
-      page.locator('form').first().locator('button[type="submit"]').click(),
+      registerForm.locator('button[type="submit"]').click(),
     ]);
 
     await expect(page.locator('.profile-header h2')).toHaveText(firstUser.name);
@@ -42,12 +43,13 @@ test.describe('Fluxo completo de indicação', () => {
     // Cadastro do segundo usuário via link
     const referralPage = await context.newPage();
     await referralPage.goto(referralLink);
-    await referralPage.locator('input[name="name"]').fill(secondUser.name);
-    await referralPage.locator('input[name="email"]').fill(secondaryEmail);
-    await referralPage.locator('input[name="password"]').fill(secondUser.password);
+    const referralRegisterForm = referralPage.locator('.flip-card-front form');
+    await referralRegisterForm.locator('input[name="name"]').fill(secondUser.name);
+    await referralRegisterForm.locator('input[name="email"]').fill(secondaryEmail);
+    await referralRegisterForm.locator('input[name="password"]').fill(secondUser.password);
     await Promise.all([
       referralPage.waitForURL('**/profile'),
-      referralPage.locator('form').first().locator('button[type="submit"]').click(),
+      referralRegisterForm.locator('button[type="submit"]').click(),
     ]);
 
     await expect(referralPage.locator('.profile-header h2')).toHaveText(secondUser.name);
@@ -56,11 +58,12 @@ test.describe('Fluxo completo de indicação', () => {
 
     // Login do primeiro usuário e verificação de pontos/histórico
     await page.goto('/?view=login');
-    await page.locator('input[name="email"]').fill(primaryEmail);
-    await page.locator('input[name="password"]').fill(firstUser.password);
+    const loginForm = page.locator('.flip-card-back form');
+    await loginForm.locator('input[name="email"]').fill(primaryEmail);
+    await loginForm.locator('input[name="password"]').fill(firstUser.password);
     await Promise.all([
       page.waitForURL('**/profile'),
-      page.locator('form').first().locator('button[type="submit"]').click(),
+      loginForm.locator('button[type="submit"]').click(),
     ]);
 
     await expect(page.locator('.score strong')).toHaveText('1');
@@ -74,7 +77,7 @@ test.describe('Fluxo completo de indicação', () => {
     // Reset de senha
     await page.goto('/?view=login');
     await page.locator('button.forgot-password').click();
-    await page.locator('.reset-panel input[name="email"]').fill(primaryEmail);
+    await page.locator('.reset-panel input[name="email"]').first().fill(primaryEmail);
 
     const [resetResponse] = await Promise.all([
       page.waitForResponse((response) => response.url().endsWith('/api/password-reset/request') && response.status() === 200),
@@ -96,16 +99,17 @@ test.describe('Fluxo completo de indicação', () => {
     await page.locator('.reset-panel button.ghost', { hasText: /voltar|back/i }).click();
 
     // Login com nova senha
-    await page.locator('input[name="email"]').fill(primaryEmail);
-    await page.locator('input[name="password"]').fill(newPassword);
+    const loginFormAfterReset = page.locator('.flip-card-back form');
+    await loginFormAfterReset.locator('input[name="email"]').fill(primaryEmail);
+    await loginFormAfterReset.locator('input[name="password"]').fill(newPassword);
     await Promise.all([
       page.waitForURL('**/profile'),
-      page.locator('form').first().locator('button[type="submit"]').click(),
+      loginFormAfterReset.locator('button[type="submit"]').click(),
     ]);
     await expect(page.locator('.profile-header h2')).toHaveText(firstUser.name);
 
     // Exclusão da conta
-    await page.locator('.danger button.danger').first().click();
+    await page.locator('.danger-zone button.danger').first().click();
     await page.locator('.danger-form input[name="email"]').fill(primaryEmail);
     await page.locator('.danger-form input[name="password"]').fill(newPassword);
     await Promise.all([
